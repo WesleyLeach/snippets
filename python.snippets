@@ -1,0 +1,243 @@
+snippet pydef "default python file"
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+'''
+Author  : Wleach
+Date    :
+Purpose :
+'''
+import argparse
+import logging
+
+def main(parsed_args):
+    '''
+    Main Driver if called alone.
+    '''
+    return
+
+
+if __name__ == "__main__":
+    parser = argparse.ArgumentParser(
+        add_help=False,
+        formatter_class=argparse.ArgumentDefaultsHelpFormatter,
+    )
+    parser.add_argument(
+        '-l',
+        '--logging',
+        action='store',
+        required=False,
+        default="INFO",
+        choices= [
+            "DEBUG",
+            "WARN",
+            "INFO",
+            "CRITICAL",
+            "ERROR"
+        ]
+    )
+    args = parser.parse_args()
+    logging.basicConfig(
+        level=args.logging,
+        datefmt='%H:%M:%S'
+    )
+    main(args)
+
+endsnippet
+
+snippet run_sub "Default subprocess"
+def _run_subcommand(command):
+    """
+    Helper function to rub sub commands in a consisten manner.
+    """
+    process = subprocess.Popen(
+        command,
+        stdout=subprocess.PIPE,
+        shell=True
+    )
+    results = []
+    for line in process.stdout:
+        results.append(line.strip())
+    return results
+
+endsnippet
+
+snippet open_file "Default file opener"
+def _open_file(input_file):     ■ "_open_file" is not accessed
+    '''
+    A function to read in a given file
+    '''
+    with open(input_file, 'r') as temp_file:
+        return temp_file.readlines()
+
+
+endsnippet
+
+snippet mainif "Main Driver"
+  if __name__ == "__main__":
+      parser = argparse.ArgumentParser(
+          add_help=False,
+          formatter_class=argparse.ArgumentDefaultsHelpFormatter,
+      )
+      parser.add_argument(
+          '-l',
+          '--logging',
+          action='store',
+          required=False,
+          choices=
+              "DEBUG",
+              "WARN",
+              "INFO",
+              "CRITICAL",
+              "ERROR"
+          ],
+          default="INFO",
+      )
+      args = parser.parse_args()
+      logging.basicConfig(
+          level=args.logging,
+      )
+      main()
+
+endsnippet
+
+snippet argchoice "Choice Command Line Arg"
+parser.add_argument(
+   '-l',
+   '--logging',
+   action='store',
+   required=False,
+   choices= [
+       "DEBUG",
+       "WARN",
+       "INFO",
+       "CRITICAL",
+       "ERROR"
+   ],
+   default="INFO",
+)
+endsnippet
+
+snippet argstore "Store Command Line Arg"
+parser.add_argument(
+  '-l',
+  '--logging',
+  action='store',
+  required=False,
+  default="INFO",
+)
+endsnippet
+
+snippet _http_request "Default HTTP Request"
+def _http_request(api_endpoint: str, http_verb='GET') -> dict:
+    """
+    Queries device42 for device information.
+    return: A json dictionary containing device information.
+
+    Param : api_endpoint
+        A string representing the api endpoint
+    Param : http_verb
+        A string denoting which HTTP verb to use
+    Return:
+        dict contaning the response from the API.
+    """
+
+    def _cache(cache_file: str):
+        '''
+        Checks for a cached version of the API call
+
+        Param : cache_file
+            File path to the cache file
+        '''
+        logging.debug(f"Checking if {cache_file} exists")
+        if not os.path.isfile(cache_file):
+            return False
+        cache_mod_time = os.path.getmtime(cache_file)
+        cache_age = datetime.now()-datetime.fromtimestamp(cache_mod_time)
+        if cache_age.days <= 5:
+            with open(cache_file, 'r') as temp_file:
+                return json.load(temp_file)
+
+    # Checking  to see if there is a local cached call
+    hasher = hashlib.md5()
+    hasher.update(api_endpoint.encode('UTF-8'))
+    cache_file = f"/tmp/{__file__}{hasher.hexdigest()}.json"
+    cache_result = _cache(cache_file)
+    if cache_result is not False:
+        logging.debug(f"Loading {api_endpoint} from cache")
+        return cache_result
+    http = urllib3.PoolManager(cert_reqs='CERT_NONE')
+    urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
+    headers = urllib3.make_headers()
+    logging.debug(f"API Endpoint: {api_endpoint}")
+    try:
+        response = http.request(
+            http_verb,
+            api_endpoint,
+            headers=headers
+        )
+    except urllib3.exceptions.MaxRetryError:
+        logging.warning("Connection could not be made to %s", api_endpoint)
+        return {}
+    try:
+        return_val = json.loads(response.data.decode('utf-8'))
+        with open(cache_file, 'w') as cache:
+            cache.write(json.dumps(return_val))
+        return return_val
+    except json.JSONDecodeError as e:
+        logging.warning(e)
+        return {}
+endsnippet
+
+snippet docstring "Default docstring"
+'''
+$1
+
+Param :
+    
+Return:
+    
+'''
+endsnippet
+
+snippet readFile "Reads in file"
+def _read_in_file(filepath: str) -> str:
+    '''
+    A function to read in file contents
+
+    Param :
+        filepath: The path to the file in question
+    Return:
+        File: Returns a file object
+    '''
+    logging.debug("Attempting to access %s", filepath)
+    if os.path.isfile(filepath):
+        with open(filepath, 'r') as temp_file:
+            return "".join(temp_file.readlines())
+    else:
+        raise Exception("Error accessing file")
+endsnippet
+
+
+snippet readFile "glob_json_files"
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+"""Globbing."""
+from pathlib import Path
+
+def _iterfiles(path:Path):
+    for i in path.iterdir():
+        if i.is_dir():
+            yield from _iterfiles(i)
+        else:
+            if i.suffix == '.json':
+                yield i
+
+def main():
+    """Run main function."""
+    for i in _iterfiles(Path('~').expanduser()):
+        print(i)
+
+
+if __name__ == '__main__':
+    main()
+endsnippet

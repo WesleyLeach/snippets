@@ -1,0 +1,82 @@
+snippet provider_aws "AWS Provider"
+provider "aws" {
+  region  = "us-east-1"
+  profile = "SecBot"
+  default_tags {
+    tags = {
+    }
+  }
+}
+
+endsnippet
+
+
+snippet terraform "Default Terraform"
+terraform {
+  required_version = ">= 0.12, <= 1.1.7"
+  required_providers {
+    aws = {
+      source  = "hashicorp/aws"
+      version = "= 3.57"
+    }
+  }
+}
+
+endsnippet
+
+snippet aws_role "AWS IAM Role"
+resource "aws_iam_role" "example_role" {
+    assume_role_policy    = jsonencode(
+        {
+            Statement = [
+                {
+                    Action    = "sts:AssumeRole"
+                    Effect    = "Allow"
+                    Principal = {
+                        Service = "ec2.amazonaws.com"
+                    }
+                },
+            ]
+            Version   = "2012-10-17"
+        }
+    )
+    force_detach_policies = false
+    managed_policy_arns   = []
+    name                  = "example_role"
+    inline_policy {
+        name = "inline-custom-allow"
+        policy = jsonencode({
+        Version = "2012-10-17"
+        Statement = [
+            {
+                Effect      = "Allow"
+                Action      = "sts:AssumeRole"
+                Resource    = "ec2 thing"
+            },
+        ]
+        })
+  }
+}
+
+endsnippet
+
+snippet aws_s3_bucket "Simple Bucket Definition"
+resource "aws_s3_bucket" "bucket" {
+  bucket              = "bucket_name"
+  object_lock_enabled = false
+  force_destroy       = false
+  timeouts {}
+}
+
+
+resource "aws_s3_bucket_public_access_block" "public_access" {
+  bucket                  = aws_s3_bucket.bucket.id
+  block_public_acls       = true
+  block_public_policy     = true
+  ignore_public_acls      = true
+  restrict_public_buckets = true
+}
+
+endsnippet
+
+

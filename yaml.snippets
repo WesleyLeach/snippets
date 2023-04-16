@@ -1,0 +1,43 @@
+snippet playbook "Default Playbook"
+---
+- name: Set Pi User
+  hosts: all
+  gather_facts: false
+  become: yes
+  become_user: root
+  vars:
+    key_path: /home/wonk/Documents/keys/pihole_key.pub
+  tasks:
+endsnippet
+
+snippet playbook "unreachable_host_bypass"
+- name: Generate running_hosts from available hosts in inventory
+  hosts: all
+  gather_facts: false
+  tasks:
+  - block:
+      - name: Determine hosts that are up
+        wait_for_connection:
+          timeout: "{{ playbook_ssh_maxtime_test | default(10)}}"
+        vars:
+          ansible_connection: ssh
+          ansible_command_timeout: "{{ playbook_ssh_maxtime_test | default(10) }}"
+      - name: Add devices with connectivity to the "running_hosts" group
+        group_by:
+          key: "running_hosts"
+    rescue:
+      - debug:
+          msg: "ERROR -- Cannot connect to {{inventory_hostname}} --"
+
+- name: Tasks on responding Hosts
+  hosts: running_hosts
+  gather_facts: false
+  become: true
+  strategy: "{{ playbook_strategy | default('linear') }}"
+  serial: "{{ playbook_serial_value | default('10') }}"
+  max_fail_percentage: "{{ playbook_max_failure_percentage | default('30') }}"
+  ignore_unreachable: "{{ playbook_ignore_unreachable | default('yes') }}"
+  vars:
+    username: ansible_user
+  tasks:
+endsnippet
